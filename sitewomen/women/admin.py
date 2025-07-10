@@ -9,7 +9,7 @@ class WomenAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'title')
     ordering = ['time_created', 'title']
     list_editable = ('is_published', )
-    list_per_page = 5
+    list_per_page = 3
 
 
 # admin.site.register(Women, WomenAdmin)
