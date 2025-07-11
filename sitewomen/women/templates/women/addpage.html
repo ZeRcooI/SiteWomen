@@ -4,10 +4,7 @@
 <h1>{{ title }}</h1>
 <form action="" method="post">
   {% csrf_token %}
-  <p><label for="id_1">Текст: </label><input id="id_1" type="text" name="filed_text"></p>
-  <p><label for="id_2">Отметка: </label><input id="id_2" type="checkbox" name="filed_check"></p>
-  <p><label for="id_3">Число: </label><input id="id_3" type="number" name="filed_num"></p>
-  <p><label for="id_4">Пароль: </label><input id="id_4" type="password" name="filed_psw"></p>
+  {{ form.as_p}}
   <p><button type="submit">Отправить</button></p>
 </form>
 {% endblock %}
