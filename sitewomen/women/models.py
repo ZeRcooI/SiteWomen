@@ -33,37 +33,33 @@ class Women(models.Model):
     time_created = models.DateTimeField(auto_now_add=True, verbose_name='Время создания')
     time_update = models.DateTimeField(auto_now=True, verbose_name='Время изменения')
     is_published = models.BooleanField(choices=tuple(map(lambda x: (bool(x[0]), x[1]), Status.choices)),
-    default = Status.DRAFT, verbose_name = 'Статус')
+                                       default=Status.DRAFT, verbose_name='Статус')
     cat = models.ForeignKey('Category', on_delete=models.CASCADE, verbose_name='Категории')
     tags = models.ManyToManyField('TagPost', blank=True, related_name='tags', verbose_name='Теги')
     husband = models.OneToOneField('Husband', on_delete=models.SET_NULL, null=True, blank=True, related_name='women',
 
+                                   verbose_name='Муж')
 
-verbose_name = 'Муж')
+    objects = models.Manager()
+    published = PublishedManager()
 
-objects = models.Manager()
-published = PublishedManager()
+    def __str__(self):
+        return self.title
 
+    class Meta:
+        verbose_name = 'Известные женщины'
+        verbose_name_plural = 'Известные женщины'
+        ordering = ['-time_created']
+        indexes = [
+            models.Index(fields=['-time_created']),
+        ]
 
-def __str__(self):
-    return self.title
+    def get_absolute_url(self):
+        return reverse('post', kwargs={'post_slug': self.slug})
 
-
-class Meta:
-    verbose_name = 'Известные женщины'
-    verbose_name_plural = 'Известные женщины'
-    ordering = ['-time_created']
-    indexes = [
-        models.Index(fields=['-time_created']),
-    ]
-
-
-def get_absolute_url(self):
-    return reverse('post', kwargs={'post_slug': self.slug})
-
-# def save(self, *args, **kwargs):
-#     self.slug = slugify(translit_to_eng(self.title))
-#     super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.slug = slugify(translit_to_eng(self.title))
+    #     super().save(*args, **kwargs)
 
 
 class Category(models.Model):
