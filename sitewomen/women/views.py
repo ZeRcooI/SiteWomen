@@ -1,7 +1,8 @@
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import TemplateView, ListView, DetailView
+from django.views.generic import TemplateView, ListView, DetailView, FormView
 
 import women
 from women.forms import AddPostForm, UploadFileForm
@@ -29,28 +30,19 @@ class WomenHome(ListView):
         return Women.published.all().select_related('cat')
 
 
-class AddPage(View):
-    def get(self, request):
-        form = AddPostForm()
+class AddPage(FormView):
+    form_class = AddPostForm
+    template_name = 'women/addpage.html'
+    success_url = reverse_lazy('home')
+    extra_context = {
+        'title': 'Добавление статьи',
+        'menu': menu,
+    }
 
-        data = {
-            'menu': menu,
-            'title': 'Добавление статьи',
-            'form': form
-        }
-        return render(request, 'women/addpage.html', context=data)
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
 
-    def post(self, request):
-        form = AddPostForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
-
-        data = {
-            'menu': menu,
-            'title': 'Добавление статьи',
-            'form': form
-        }
 
 
 class WomenCategory(ListView):
@@ -75,14 +67,13 @@ class TagPostList(ListView):
     context_object_name = 'posts'
     allow_empty = False
 
-    def get_context_data(self, object_list=None,**kwargs):
+    def get_context_data(self, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
         tag = TagPost.objects.get(slug=self.kwargs['tag_slug'])
         context['title'] = 'Тег: ' + tag.tag
         context['menu'] = menu
         context['cat_selected'] = None
         return context
-
 
     def get_queryset(self):
         return Women.published.filter(tags__slug=self.kwargs['tag_slug']).select_related('cat')
@@ -104,6 +95,17 @@ class ShowPost(DetailView):
         return get_object_or_404(Women.published, slug=self.kwargs[self.slug_url_kwarg])
 
 
+def about(request):
+    if request.method == "POST":
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            fp = UploadFiles(file=form.cleaned_data['file'])
+            fp.save()
+
+    else:
+        form = UploadFileForm()
+    return render(request, 'women/about.html', {'title': 'О сайте', 'menu': menu, 'form': form})
+
 
 def contact(request):
     return HttpResponse("Обратная связь")
@@ -115,7 +117,6 @@ def login(request):
 
 def page_not_found(request, exception):
     return HttpResponseNotFound("<h1>Страница не найдена</h1>")
-
 
 # def index(request):
 #     posts = Women.published.all().select_related('cat')
@@ -129,17 +130,28 @@ def page_not_found(request, exception):
 #     return render(request, 'women/index.html', context=data)
 
 
-def about(request):
-    if request.method == "POST":
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            fp = UploadFiles(file=form.cleaned_data['file'])
-            fp.save()
-
-    else:
-        form = UploadFileForm()
-    return render(request, 'women/about.html', {'title': 'О сайте', 'menu': menu, 'form': form})
-
+# class AddPage(View):
+#     def get(self, request):
+#         form = AddPostForm()
+#
+#         data = {
+#             'menu': menu,
+#             'title': 'Добавление статьи',
+#             'form': form
+#         }
+#         return render(request, 'women/addpage.html', context=data)
+#
+#     def post(self, request):
+#         form = AddPostForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('home')
+#
+#         data = {
+#             'menu': menu,
+#             'title': 'Добавление статьи',
+#             'form': form
+#         }
 
 # def show_post(request, post_slug):
 #     post = get_object_or_404(Women, slug=post_slug)
