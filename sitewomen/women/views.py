@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView, DetailView
 
 import women
 from women.forms import AddPostForm, UploadFileForm
@@ -58,7 +58,6 @@ class WomenCategory(ListView):
     context_object_name = 'posts'
     allow_empty = False
 
-
     def get_queryset(self):
         return Women.published.filter(cat__slug=self.kwargs['cat_slug']).select_related('cat')
 
@@ -70,6 +69,52 @@ class WomenCategory(ListView):
         context['cat_selected'] = cat.pk
         return context
 
+
+class TagPostList(ListView):
+    template_name = 'women/index.html'
+    context_object_name = 'posts'
+    allow_empty = False
+
+    def get_context_data(self, object_list=None,**kwargs):
+        context = super().get_context_data(**kwargs)
+        tag = TagPost.objects.get(slug=self.kwargs['tag_slug'])
+        context['title'] = 'Тег: ' + tag.tag
+        context['menu'] = menu
+        context['cat_selected'] = None
+        return context
+
+
+    def get_queryset(self):
+        return Women.published.filter(tags__slug=self.kwargs['tag_slug']).select_related('cat')
+
+
+class ShowPost(DetailView):
+    # model = Women
+    template_name = 'women/post.html'
+    slug_url_kwarg = 'post_slug'
+    context_object_name = 'post'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = context['post'].title
+        context['menu'] = menu
+        return context
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Women.published, slug=self.kwargs[self.slug_url_kwarg])
+
+
+
+def contact(request):
+    return HttpResponse("Обратная связь")
+
+
+def login(request):
+    return HttpResponse("Авторизация")
+
+
+def page_not_found(request, exception):
+    return HttpResponseNotFound("<h1>Страница не найдена</h1>")
 
 
 # def index(request):
@@ -96,17 +141,16 @@ def about(request):
     return render(request, 'women/about.html', {'title': 'О сайте', 'menu': menu, 'form': form})
 
 
-def show_post(request, post_slug):
-    post = get_object_or_404(Women, slug=post_slug)
-
-    data = {
-        'title': post.title,
-        'menu': menu,
-        'post': post,
-        'cat_selected': 1,
-    }
-    return render(request, 'women/post.html', context=data)
-
+# def show_post(request, post_slug):
+#     post = get_object_or_404(Women, slug=post_slug)
+#
+#     data = {
+#         'title': post.title,
+#         'menu': menu,
+#         'post': post,
+#         'cat_selected': 1,
+#     }
+#     return render(request, 'women/post.html', context=data)
 
 # def addpage(request):
 #     if request.method == 'POST':
@@ -132,39 +176,27 @@ def show_post(request, post_slug):
 #     return render(request, 'women/addpage.html', context=data)
 
 
-def contact(request):
-    return HttpResponse("Обратная связь")
+# def show_category(request, cat_slug):
+#     category = get_object_or_404(Category, slug=cat_slug)
+#     posts = Women.published.filter(cat_id=category.pk).select_related('cat')
+#
+#     data = {
+#         'title': f'Рубрика: {category.name}',
+#         'menu': menu,
+#         'posts': posts,
+#         'cat_selected': category.pk,
+#     }
+#     return render(request, 'women/index.html', context=data)
 
-
-def login(request):
-    return HttpResponse("Авторизация")
-
-
-def show_category(request, cat_slug):
-    category = get_object_or_404(Category, slug=cat_slug)
-    posts = Women.published.filter(cat_id=category.pk).select_related('cat')
-
-    data = {
-        'title': f'Рубрика: {category.name}',
-        'menu': menu,
-        'posts': posts,
-        'cat_selected': category.pk,
-    }
-    return render(request, 'women/index.html', context=data)
-
-
-def page_not_found(request, exception):
-    return HttpResponseNotFound("<h1>Страница не найдена</h1>")
-
-
-def show_tag_postlist(request, tag_slug):
-    tag = get_object_or_404(TagPost, slug=tag_slug)
-    posts = tag.tags.filter(is_published=Women.Status.PUBLISHED).select_related('cat')
-
-    data = {
-        'title': f'Тег: {tag.tag}',
-        'menu': menu,
-        'posts': posts,
-        'cat_selected': None,
-    }
-    return render(request, 'women/index.html', context=data)
+#
+# def show_tag_postlist(request, tag_slug):
+#     tag = get_object_or_404(TagPost, slug=tag_slug)
+#     posts = tag.tags.filter(is_published=Women.Status.PUBLISHED).select_related('cat')
+#
+#     data = {
+#         'title': f'Тег: {tag.tag}',
+#         'menu': menu,
+#         'posts': posts,
+#         'cat_selected': None,
+#     }
+#     return render(request, 'women/index.html', context=data)
