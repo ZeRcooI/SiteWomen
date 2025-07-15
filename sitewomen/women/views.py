@@ -1,5 +1,7 @@
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views import View
+from django.views.generic import TemplateView
 
 import women
 from women.forms import AddPostForm, UploadFileForm
@@ -24,6 +26,16 @@ def index(request):
     }
     return render(request, 'women/index.html', context=data)
 
+
+class WomenHome(TemplateView):
+    template_name = 'women/index.html'
+
+    extra_context = {
+        'title': 'Главная страница',
+        'menu': menu,
+        'posts': Women.published.all().select_related('cat'),
+        'cat_selected': 0,
+    }
 
 # def handle_uploaded_file(f):
 #     with open(f'uploads/{f.name}', 'wb+') as destination:
@@ -78,6 +90,31 @@ def addpage(request):
     }
 
     return render(request, 'women/addpage.html', context=data)
+
+
+class AddPage(View):
+
+    def get(self, request):
+        form = AddPostForm()
+
+        data = {
+            'menu': menu,
+            'title': 'Добавление статьи',
+            'form': form
+        }
+        return render(request, 'women/addpage.html', context=data)
+
+    def post(self, request):
+        form = AddPostForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+
+        data = {
+            'menu': menu,
+            'title': 'Добавление статьи',
+            'form': form
+        }
 
 
 def contact(request):
