@@ -2,7 +2,7 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import TemplateView, ListView, DetailView, FormView
+from django.views.generic import TemplateView, ListView, DetailView, FormView, CreateView, UpdateView
 
 import women
 from women.forms import AddPostForm, UploadFileForm
@@ -30,18 +30,23 @@ class WomenHome(ListView):
         return Women.published.all().select_related('cat')
 
 
-class AddPage(FormView):
+class AddPage(CreateView):
     form_class = AddPostForm
     template_name = 'women/addpage.html'
-    success_url = reverse_lazy('home')
     extra_context = {
         'title': 'Добавление статьи',
         'menu': menu,
     }
 
-    def form_valid(self, form):
-        form.save()
-        return super().form_valid(form)
+class UpdatePage(UpdateView):
+    model = Women
+    fields = ['title', 'content', 'photo', 'is_published', 'cat']
+    template_name = 'women/addpage.html'
+    success_url = reverse_lazy('home')
+    extra_context = {
+        'title': 'Редактирование статьи',
+        'menu': menu,
+    }
 
 
 
@@ -118,6 +123,21 @@ def login(request):
 def page_not_found(request, exception):
     return HttpResponseNotFound("<h1>Страница не найдена</h1>")
 
+# class AddPage(FormView):
+#     form_class = AddPostForm
+#     model = Women
+#     fields = '__all__'
+#     template_name = 'women/addpage.html'
+#     success_url = reverse_lazy('home')
+#     extra_context = {
+#         'title': 'Добавление статьи',
+#         'menu': menu,
+#     }
+#
+#     def form_valid(self, form):
+#         form.save()
+#         return super().form_valid(form)
+
 # def index(request):
 #     posts = Women.published.all().select_related('cat')
 #
@@ -128,7 +148,6 @@ def page_not_found(request, exception):
 #         'cat_selected': 0,
 #     }
 #     return render(request, 'women/index.html', context=data)
-
 
 # class AddPage(View):
 #     def get(self, request):
@@ -187,7 +206,6 @@ def page_not_found(request, exception):
 #
 #     return render(request, 'women/addpage.html', context=data)
 
-
 # def show_category(request, cat_slug):
 #     category = get_object_or_404(Category, slug=cat_slug)
 #     posts = Women.published.filter(cat_id=category.pk).select_related('cat')
@@ -200,7 +218,6 @@ def page_not_found(request, exception):
 #     }
 #     return render(request, 'women/index.html', context=data)
 
-#
 # def show_tag_postlist(request, tag_slug):
 #     tag = get_object_or_404(TagPost, slug=tag_slug)
 #     posts = tag.tags.filter(is_published=Women.Status.PUBLISHED).select_related('cat')
