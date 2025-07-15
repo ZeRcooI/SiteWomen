@@ -1,5 +1,3 @@
-from multiprocessing.resource_tracker import register
-
 from django.urls import path, register_converter
 from . import views
 from . import converters
